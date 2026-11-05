@@ -15,6 +15,9 @@
 #   Check=dest             the installed file whose $VER gives the installed version
 #                          (must be the dest of one File= line)
 #   Category=, Description= shown on the Amiga
+#   AllowScript=yes        only for entries that are meant to replace a script
+#                          (s bit); CaffeineOSDT 5.3.1+ refuses that otherwise,
+#                          because scripts are often CaffeineOS's own
 #
 # Plain ASCII, LF line endings.
 

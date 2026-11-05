@@ -290,6 +290,8 @@ def build_entry(p, source, marker, url, cache):
     for fl in files:
         out.append(f'File={fl}')
     out.append(f"Check={p['Check']}")
+    if p.get('AllowScript', '').lower() == 'yes':
+        out.append('AllowScript=yes')
     out.append(f"SourceHash={p['_hash']}")
     return out
 
