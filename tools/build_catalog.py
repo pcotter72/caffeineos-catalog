@@ -33,6 +33,11 @@ import zipfile
 
 USER_AGENT = 'caffeineos-catalog-builder (+https://github.com/pcotter72/caffeineos-catalog)'
 AMINET = 'https://aminet.net'
+RAW_BASE = 'https://raw.githubusercontent.com/pcotter72/caffeineos-catalog/main/'
+READMES_DIR = 'readmes'     # set next to catalog.txt in main()
+# Part of every entry's SourceHash: raising it rebuilds all entries once
+# (2 = Readme= added, 05.11.2026).
+BUILDER_REV = '2'
 
 
 # ---------------------------------------------------------------- sources.txt
@@ -69,7 +74,8 @@ def parse_sources(path):
             sys.exit(f"[Program:{p['Name']}]: give exactly one of GitHub=, Aminet= or URL=")
         if not p['File']:
             sys.exit(f"[Program:{p['Name']}]: at least one File= line needed")
-        p['_hash'] = hashlib.md5('\n'.join(p['_lines']).encode('ascii')).hexdigest()[:12]
+        p['_hash'] = hashlib.md5(('\n'.join(p['_lines']) + '\nrev=' + BUILDER_REV)
+                                 .encode('ascii')).hexdigest()[:12]
     return programs
 
 
@@ -265,6 +271,19 @@ def build_entry(p, source, marker, url, cache):
             with open(os.path.join(work, *check_src.split('/')), 'rb') as f:
                 check_bytes = f.read()
 
+        # Readme shown by CaffeineOSDT's "Show README": an explicit Readme= URL,
+        # a file from the archive (ReadmeFile=, published under readmes/), or
+        # for Aminet packages the package's own .readme.
+        readme_url = p.get('Readme')
+        if not readme_url and 'ReadmeFile' in p and p['Archive'] != 'file':
+            rsrc = resolve(work, p['ReadmeFile'])
+            rname = re.sub(r'[^A-Za-z0-9._-]', '_', rsrc.rsplit('/', 1)[-1])
+            os.makedirs(READMES_DIR, exist_ok=True)
+            shutil.copyfile(os.path.join(work, *rsrc.split('/')), os.path.join(READMES_DIR, rname))
+            readme_url = RAW_BASE + 'readmes/' + rname
+        if not readme_url and 'Aminet' in p:
+            readme_url = f"{AMINET}/{p['Aminet']}.readme"
+
     ver = read_ver(check_bytes)
     if not ver:
         raise RuntimeError('no $VER in the Check file')
@@ -290,6 +309,8 @@ def build_entry(p, source, marker, url, cache):
     for fl in files:
         out.append(f'File={fl}')
     out.append(f"Check={p['Check']}")
+    if readme_url:
+        out.append(f'Readme={readme_url}')
     if p.get('AllowScript', '').lower() == 'yes':
         out.append('AllowScript=yes')
     out.append(f"SourceHash={p['_hash']}")
@@ -300,6 +321,8 @@ def main():
     if len(sys.argv) != 3:
         sys.exit(__doc__)
     sources, target = sys.argv[1], sys.argv[2]
+    global READMES_DIR
+    READMES_DIR = os.path.join(os.path.dirname(os.path.abspath(target)), 'readmes')
     programs = parse_sources(sources)
     previous = parse_catalog(target)
     cache = {}
