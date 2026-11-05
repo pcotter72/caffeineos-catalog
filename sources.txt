@@ -102,3 +102,77 @@ Archive=lha
 File=*/Classes/Datatypes/jfif.datatype > SYS:Classes/DataTypes/jfif.datatype
 File=*/Devs/Datatypes/JFIF > SYS:Devs/DataTypes/JFIF
 Check=SYS:Classes/DataTypes/jfif.datatype
+
+# ---- Aminet programs CaffeineOS ships (checked 05.11.2026, approved by Pedro) ----
+
+[Program:BlazeWCP]
+Category=System
+Description=Fast chunky-to-planar patch for the OS chunky functions (AGA)
+Aminet=util/boot/BlazeWCP178
+Archive=lha
+File=BlazeWCP > SYS:C/BLAZEWCP
+Check=SYS:C/BLAZEWCP
+
+[Program:HollywoodPlayer]
+Category=Multimedia
+Description=Player for Hollywood applets (m68k/m881 FPU build)
+Aminet=dev/hwood/HollywoodPlayer
+Archive=lha
+File=HollywoodPlayer/Platforms/m881-amigaos/HollywoodPlayer > SYS:C/HollywoodPlayer
+Check=SYS:C/HollywoodPlayer
+
+[Program:UnZip]
+Category=Archivers
+Description=Info-ZIP UnZip, 68020 build
+Aminet=util/arc/UnZip-6.0
+Archive=lha
+File=UnZip/020/UnZip > SYS:C/unzip
+Check=SYS:C/unzip
+
+[Program:TimeKeeper]
+Category=Network
+Description=AmiTimeKeeper, keeps the clock right over the network
+Aminet=util/cdity/AmiTimeKeeper
+Archive=lha
+File=*/TimeKeeper > SYS:C/TimeKeeper
+Check=SYS:C/TimeKeeper
+
+[Program:DiskImageGUI]
+Category=Disk
+Description=Mounts ADF, ISO and HDF disk images
+Aminet=disk/misc/DiskImageGui
+Archive=lha
+File=DiskImageGui/DiskImageGui > SYS:System/DiskImageGUI
+Check=SYS:System/DiskImageGUI
+
+[Program:guigfx.library-MUI]
+Category=Libraries
+Description=guigfx.library 68040 build, the copy in System/MUI/Libs
+Aminet=dev/misc/guigfxlib
+Archive=lha
+File=libs/guigfx.library_68040 > SYS:System/MUI/Libs/guigfx.library
+Check=SYS:System/MUI/Libs/guigfx.library
+
+[Program:COP]
+Category=Development
+Description=COP low level debugger
+Aminet=dev/debug/COP
+Archive=lha
+File=COP/COP > SYS:C/COP
+Check=SYS:C/COP
+
+[Program:WHDArchiveExtractor]
+Category=Archivers
+Description=Extracts WHDLoad archives
+Aminet=util/arc/WHDArchiveExtractor
+Archive=lha
+File=WHDArchiveExtractor > SYS:C/WHDArchiveExtractor
+Check=SYS:C/WHDArchiveExtractor
+
+[Program:TimeIt]
+Category=Shell
+Description=Times other Shell commands
+Aminet=util/time/TimeIt
+Archive=lha
+File=TimeIt/TimeIt > SYS:C/TimeIt
+Check=SYS:C/TimeIt
