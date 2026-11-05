@@ -1,0 +1,517 @@
+                          C m d l i n e E d i t o r
+                                version 3.34
+
+            Emu68 / PiStorm configuration editor for CaffeineOS
+                       by Pedro Cotter, 05.11.2026
+
+============================================================================
+
+ CONTENTS
+
+    1. What it does
+    2. Requirements
+    3. Installation
+    4. Quick start
+    5. The window, menu and keys
+    6. Load, Save, backups and Reset
+    7. The tabs
+    8. Framethrower
+    9. Stealth mode
+   10. DTArgs - what is Emu68 really using?
+   11. Coming from an older version (cmdline.txt)
+   12. Tips and troubleshooting
+   13. History
+
+============================================================================
+
+ 1. WHAT IT DOES
+ ---------------
+
+ CmdlineEditor lets you change the settings of Emu68 and of the Raspberry
+ Pi from the Workbench, without editing text files by hand. It edits the
+ Pi boot configuration on the Pi boot partition (USERFAT:):
+
+    USERFAT:config.txt          Raspberry Pi settings and the Emu68
+                                overlay lines (dtoverlay=...)
+
+ The editor is made for Emu68 1.1, build 1_1_wip 9e69a86 (14.10.2026) or
+ newer. Since that build Emu68 reads every option from the "dtoverlay="
+ lines of config.txt and no longer looks at Boot/cmdline.txt at all.
+ The editor therefore writes all Emu68 options to config.txt. An old
+ cmdline.txt is still read once, so its options are carried over (see
+ chapter 11).
+
+ When it saves, the editor only changes the lines that belong to its
+ settings. Your comments, the order of the file and any lines it does not
+ know about stay exactly as they are.
+
+ Every option has a help bubble: hold the mouse over it to see what it
+ does and which overlay parameter it writes.
+
+============================================================================
+
+ 2. REQUIREMENTS
+ ---------------
+
+  - AmigaOS 3.x
+  - MUI 3.8 or newer (muimaster.library V19) with NList.mcc and
+    NListview.mcc
+  - Emu68 1.1, build 1_1_wip 9e69a86 or newer, on a PiStorm16,
+    PiStorm32 / PiStorm32lite or Classic PiStorm.
+    Older builds (ba25d97, d9059de) still read cmdline.txt and "args="
+    and ignore what this version writes: use CmdlineEditor 3.29 with
+    them. The editor recognises such a build and tells you at start.
+  - Access to the Pi boot partition as USERFAT:
+  - asl.library V38 or newer, only for the file buttons
+    (Kernel, Kickstart ROM, test firmware)
+  - About 16 KB of stack. From the Shell, use "Stack 16384" before
+    starting it; for the icon, check the stack in its Information.
+
+ The program icon is a PNG icon, so it needs an icon.library that can
+ show PNG icons.
+
+ The "Text Editor" button uses sys:c/Redit.
+
+============================================================================
+
+ 3. INSTALLATION
+ ---------------
+
+ Copy these files from the archive:
+
+    CmdlineEditor + CmdlineEditor.info    anywhere, e.g. SYS:Tools
+    CmdlineEditor.txt                     this text, next to the program
+    DTArgs                                to C: (a Shell command)
+
+ The drawer "Defaults" holds config.txt 3.4, the CaffeineOS default for
+ the Pi boot partition. You only need it to start again from a clean
+ file: make a copy of your own USERFAT:config.txt first, then copy the
+ default over it. Reset to Defaults in the editor gives you the same
+ settings without replacing the file.
+
+============================================================================
+
+ 4. QUICK START
+ --------------
+
+  1. Start CmdlineEditor. If USERFAT: is mounted, the files are loaded
+     at once. If not, press "Mount USERFAT:" first.
+  2. Change what you want. The list "Save will write (this tab)" at the
+     bottom shows the resulting lines; press "Refresh" to update it.
+     A value can also be typed into the box beside a slider: press
+     Return and the slider follows (out-of-range values are clipped).
+  3. Press "Save".
+  4. Switch the Amiga OFF, wait about 5 seconds, switch it ON again.
+     A simple reboot may not be enough, because the Pi only reads the
+     files when it starts.
+
+============================================================================
+
+ 5. THE WINDOW, MENU AND KEYS
+ ----------------------------
+
+ The top line shows the Emu68 version that is running right now, read
+ directly from Emu68 itself, followed by "(reads overlays)" for a build
+ this editor is made for, or "(cmdline firmware - use 3.29)" for an
+ older one.
+
+ There are three main tabs:
+
+    Emu68                      Emu68 options (Main, Storage, CPU & JIT,
+                               Hardware, Diagnostics)
+    Raspberry Pi (config.txt)  Pi options (Boot, Display, Overclock)
+    Framethrower               video capture settings
+
+ Buttons at the bottom:
+
+    Mount USERFAT:  Refresh  Text Editor
+    Load  Save  Preview  Reset  About  Quit
+
+ Each button has an underlined letter. Press that key (while you are not
+ typing in a text field) to use the button.
+
+ TAB moves the keyboard focus to the next gadget (Shift+TAB back, with
+ MUI's default keyboard settings). Cursor keys then move a slider or a
+ cycle gadget, Return toggles a checkmark or presses a button.
+
+ Press the right mouse button for the "Project" menu:
+
+    Load                    Right-Amiga L
+    Save                    Right-Amiga S
+    Preview to RAM:         Right-Amiga P
+    Mount USERFAT:          Right-Amiga M
+    Open in Text Editor     Right-Amiga E
+    Reset to Defaults...    (no key, it asks first anyway)
+    About...                Right-Amiga ?
+    Quit                    Right-Amiga Q
+
+============================================================================
+
+ 6. LOAD, SAVE, BACKUPS AND RESET
+ --------------------------------
+
+ Load
+    Reads config.txt again (and an old cmdline.txt, chapter 11), on
+    every tab, and shows exactly what is in it. Settings that are not
+    in the file go back to their defaults, so nothing is left over from
+    before.
+
+ Save
+    Writes config.txt, whatever tab you are on. All questions come
+    first; if you press Cancel at any of them, nothing is written.
+    The file is first written as "config.txt.tmp" and only then replaces
+    the original. If something goes wrong while writing, the original
+    file stays untouched and you get a message.
+
+ Backups
+    config.txt is always backed up before it is written:
+
+       USERFAT:config.txt.bak
+
+    To go back, rename the .bak file to config.txt.
+
+ Unsaved changes
+    If you changed something and press Quit, Load or Mount USERFAT:, the
+    editor asks first. Quit offers Save / Quit / Cancel.
+
+ Preview
+    Writes what Save would write to RAM:config.txt, without touching
+    USERFAT:. Open it with any text editor. The requester also says
+    when Save will delete an old Boot/cmdline.txt (chapter 11).
+
+ Reset to Defaults
+    Sets every option to the CaffeineOS defaults (the same settings as
+    the default config.txt 3.4). Your own Kickstart ROM path is kept.
+    Nothing is written until you press Save.
+
+ Text Editor
+    Opens config.txt in Redit. After editing by hand, press Load so the
+    editor sees your changes.
+
+ Long overlay lines
+    A line in config.txt may hold at most 98 characters; the Pi
+    firmware ignores the rest. Emu68 accepts overlay options on the
+    overlay line itself
+       dtoverlay=unicam,boot,smooth
+    or as separate lines below it
+       dtoverlay=unicam
+       dtparam=boot
+       dtparam=smooth
+    The editor reads both. When it saves, it puts as many options on
+    the overlay line as fit into 98 characters and continues with
+    "dtparam=" lines directly below it. Do not move or separate those
+    lines: a "dtparam=" line always belongs to the overlay line above
+    it. The CM4 antenna lines ("dtoverlay=" followed by "dtparam=ant2")
+    are left as they are.
+
+============================================================================
+
+ 7. THE TABS
+ -----------
+
+ Emu68 > Main
+    Boot logo colour (14 themes, shown on the Pi HDMI boot screen),
+    Amiga video mode (PAL/NTSC), RTG video memory (8-256 MB, even;
+    empty = 16 MB, the Emu68 default), and the Memory frame: slow RAM
+    areas at $C00000 / $C80000 / $D00000, move slow RAM to CHIP (A500
+    trapdoor), Zorro II RAM, CMA memory.
+
+    CMA memory (2-256 MB, even; empty = none) reserves a block of
+    uncached memory for Amiga programs that use cma.resource (Emu68
+    1_1_wip e4ccb31 or newer). Emu68 takes it plus 2 MB from Fast RAM.
+    Leave it empty unless a program asks for it. 4 MB is written as
+    "dtoverlay=cma", other sizes as "dtoverlay=cma,size=N".
+
+ Emu68 > Storage
+    SD card and eMMC drivers. "Whole-card access (unit 0)" can be off,
+    read-only or read-write. "Hide internal IDE port" makes the A600 /
+    A1200 internal IDE port invisible to the Amiga.
+
+ Emu68 > CPU & JIT
+    FPU, VBR, PPC JIT, fast page zero, blitter wait, slow CHIP RAM
+    code with its slowdown interval (0-7, 1 = Emu68 default), slow DBF
+    loops, the interpreter for code that runs with the caches off, and
+    the advanced JIT tuning. Leave the advanced values at their defaults
+    unless a program needs a change.
+
+    WARNING - Fast page zero: only use it on Amigas with 2 MB Chip RAM.
+    On a machine with 1 MB Chip RAM, Kickstart then counts the mirrored
+    memory as extra Chip RAM and reports 2 MB, and memory gets
+    overwritten. It is never on by default.
+
+ Emu68 > Hardware
+    Floppy drive swap: DF0: can change places with DF1:, DF2: or DF3:
+    (one swap at a time; Emu68 only keeps the last one it finds).
+
+    DANGER ZONE - "Disable Emu68 Zorro boards": this also removes the SD
+    and eMMC drivers, the Framethrower support, devicetree.resource,
+    68040.library and Zorro II RAM. Your Amiga then starts without SD
+    card access, and you need another computer to undo it. The editor
+    asks before saving it.
+
+ Emu68 > Diagnostics
+    Boot-time bus test and memory benchmark. Their results appear on the
+    Pi HDMI boot screen. A bus test error stops the boot on purpose.
+    On an A1200 with PiStorm32, do not run bus test and memory benchmark
+    together: Emu68 then hangs after the bus test.
+    Debug output, disassembly and the device tree dump go to the Pi
+    serial port; "Async logging" and "Fast serial" change how that port
+    is driven.
+    "Show Emu68 status..." opens the same report as DTArgs (chapter 10).
+
+    Test Firmware (developers only) - leave it off. Emu68 already
+    contains the right firmware for every PiStorm. For testing a new
+    firmware, tick it and pick a gzip-compressed firmware file on
+    USERFAT:. Save then writes it in front of the Kickstart ROM:
+       initramfs <firmware>,<Kickstart ROM>
+    On a PiStorm16/32/32lite it is loaded into the FPGA at every boot.
+    On a Classic PiStorm it is PROGRAMMED into the CPLD whenever the
+    CPLD holds a different version. Emu68 does not check that the file
+    suits the board, so the editor asks before saving it.
+
+ Raspberry Pi > Boot
+    Kernel and Kickstart ROM (with file buttons: pick the file on
+    USERFAT:, the editor writes the right path), boot delays, splash
+    screen, Total Mem and GPU memory (both off by default; Emu68 1.1
+    does not need them), CM4 external antenna, USB OTG mode. There is
+    no "Cmdline file" line any more: Emu68 9e69a86 reads nothing from
+    cmdline.txt, so Save comments an existing cmdline= key out and the
+    shipped config.txt 3.4 has none.
+
+ Raspberry Pi > Display
+    HDMI group and resolution. The 2160x1440 mode needs a Pi 4 or CM4.
+    1080p 50 Hz: if your display cannot show it, you may get no picture;
+    set the resolution back from another computer if that happens.
+
+ Raspberry Pi > Overclock
+    Base frequencies and overclocking. The presets save config.txt right
+    away. Each preset switches on its own block of lines in config.txt.
+    Overclocking needs active cooling (heatsink and fan).
+
+ Framethrower
+    See chapter 8.
+
+============================================================================
+
+ 8. FRAMETHROWER
+ ---------------
+
+ "Enable at boot" writes the Framethrower line (dtoverlay=unicam) to
+ config.txt. The other settings on this tab are written into the same
+ line (continued with "dtparam=" lines when it gets long, chapter 6).
+
+ Live Preview and live control only work when that line was in
+ config.txt when the Amiga was switched on. If they are greyed out, the
+ help bubble tells you why. Usually: tick "Enable at boot", Save, and
+ switch off and on.
+
+ Live Preview opens a test screen so you can adjust the picture while
+ you watch it. When you close it, its values are copied back to the
+ Framethrower tab. Press Save to keep them.
+
+ Capture:
+    Frame          the size of the incoming picture (empty = 720,576,
+                   right for the Framethrower)
+    Display size   the part of the frame that is shown
+    Display offset where that part starts
+
+ Save refuses a display size larger than the frame.
+
+============================================================================
+
+ 9. STEALTH MODE
+ ---------------
+
+ Stealth mode switches Emu68 and the PiStorm off, so the Amiga runs on
+ its own CPU and its own Kickstart ROM, like a stock machine. It works
+ with PiStorm16 and PiStorm32 / PiStorm32lite, not with the Classic
+ PiStorm.
+
+ To enter it:
+  1. Hold Ctrl + Amiga + Amiga while Emu68 is running (or while it
+     starts). The Pi restarts.
+  2. Keep holding. When "!!! STEALTH MODE !!!" appears below the Emu68
+     logo on the HDMI screen, let go.
+  3. The Amiga now starts on its own CPU. Normal resets keep it in
+     stealth mode.
+
+ To go back to Emu68, hold Ctrl + Amiga + Amiga for more than 3 seconds.
+
+ PiStorm32lite: the stealth mode built into Emu68 1.1 does not work yet
+ on an A1200 with PiStorm32lite (Emu68 issue #316). The default
+ config.txt contains a "[gpio4=0]" section that loads the older stealth
+ firmware while the keys are held at boot. With it, stealth mode works
+ on both PiStorm32lite and PiStorm16. Leave that section in config.txt.
+
+============================================================================
+
+ 10. DTARGS - WHAT IS EMU68 REALLY USING?
+ ----------------------------------------
+
+ The file on USERFAT: tells you what Emu68 should use. DTArgs shows what
+ it really uses right now. Run it in a Shell after the Amiga has started:
+
+    1> DTArgs
+
+ It shows the Emu68 version, git hash and PiStorm model, whether this
+ build reads the overlays or still cmdline.txt, any leftover options in
+ cmdline.txt or "args=", the JIT settings, FPU / Zorro / fast page zero,
+ slow RAM and floppy swap, the RTG, CMA and Framethrower memory, logo, video
+ mode, SD/eMMC drivers, Zorro II RAM, diagnostics and the Framethrower
+ settings, and it warns about common mistakes.
+
+ Return codes: 0 = no problems found, 5 = warnings, 20 = not running on
+ Emu68.
+
+ The same report is built into the editor: Emu68 > Diagnostics >
+ "Show Emu68 status...". Its "Save to RAM:" button writes it to
+ RAM:Emu68Status.txt.
+
+ DTArgs 1.8 belongs to this editor. On an older Emu68 (ba25d97,
+ d9059de) use DTArgs 1.4 from CmdlineEditor 3.29: it analyses the
+ cmdline.txt and "args=" options that build still reads.
+
+============================================================================
+
+ 11. COMING FROM AN OLDER VERSION (CMDLINE.TXT)
+ ----------------------------------------------
+
+ Up to CmdlineEditor 3.29 (Emu68 up to d9059de) some options lived in
+ USERFAT:Boot/cmdline.txt and the JIT options were written as
+ args="..." on the dtoverlay=emu68 line. Emu68 9e69a86 reads neither
+ any more.
+
+ Nothing is lost: Load reads the old cmdline.txt and the old "args="
+ string as before and shows the settings in the usual places. The next
+ Save writes them in the new form:
+
+    enable_c0_slow etc.      ->  dtoverlay=slowram,enable_c0,...
+    swap_df0_with_dfN        ->  dtoverlay=swap_df0,with_dfN
+    async_log, fast_serial   ->  dtoverlay=logger,async,fast
+    vc4.mem=N                ->  dtoverlay=videocore,mem=N
+    debug, disassemble       ->  dtoverlay=diagnostic,debug,disassemble
+    args="DBF SC cs_dist=3"  ->  dtoverlay=emu68,DBF,SC,SCS=3
+
+ After that Save, Boot/cmdline.txt is deleted; a file that still
+ carried options is kept as Boot/cmdline.txt.bak. Deleted rather than
+ emptied or filled with a note, because the Pi firmware copies the
+ last line of cmdline.txt into its boot arguments, where even a
+ comment line would show up. An empty or comment-only cmdline.txt is
+ deleted without a backup. The cmdline= line in config.txt goes the
+ same way: Save comments it out.
+
+ Options that no Emu68 build reads any more are dropped on that Save:
+ limit_2g, enable_cache, copy_rom=, checksum_rom, one_slot, ps16/ps32
+ and debug_not_implemented. Their controls are gone from the editor.
+
+ If the running Emu68 is an older build, the editor says so at start
+ and asks again before Save ("Save anyway" / "Cancel"). You can prepare
+ the file for the update, but the settings only take effect once Emu68
+ 9e69a86 or newer is installed.
+
+============================================================================
+
+ 12. TIPS AND TROUBLESHOOTING
+ ----------------------------
+
+  - A change has no effect: switch the Amiga off and on (not just a
+    reboot), then check with DTArgs. If DTArgs says "reads cmdline.txt
+    and args=", the Emu68 build is too old for this editor.
+  - "USERFAT: is not mounted": press "Mount USERFAT:", then Load.
+  - You edited the file by hand: press Load before changing anything
+    else.
+  - The Amiga does not start after a change: put the SD card into
+    another computer and copy back config.txt.bak (rename it to
+    config.txt).
+  - No picture after choosing a resolution: change the HDMI lines in
+    config.txt back from another computer.
+  - Save refuses the RTG video memory: it must be an even number from
+    8 to 256, or empty.
+  - Save refuses the CMA memory: it must be an even number from 2 to
+    256, or empty.
+  - Not sure what an option does: hold the mouse over it.
+
+============================================================================
+
+ 13. HISTORY
+ -----------
+
+ 3.34 (05.11.2026)
+  - Overclock presets: each preset uses its own block of lines in
+    config.txt (the Pi3 preset used to fill the CM4/Pi4 block)
+
+ 3.33 (22.10.2026)
+  - The Emu68 line at the top is no longer cut off when USERFAT: is
+    not mounted at start
+
+ 3.32 (22.10.2026)
+  - CMA memory (Emu68 > Main, Memory frame): dtoverlay=cma, new in
+    Emu68 1_1_wip e4ccb31. Off by default.
+  - Emu68 status report and DTArgs 1.8 show the CMA memory, and warn
+    when the running Emu68 is too old for CMA
+
+ 3.31 (16.10.2026)
+  - The PPC JIT cache size (ppc_jit_size=) is written only while
+    "Enable PPC JIT" is ticked; the slider is greyed out otherwise.
+    3.30 kept a changed size on the line after PPC was switched off
+    (harmless: the kernel ignores it without ppc_enable)
+
+ 3.30 (16.10.2026)
+  - Made for Emu68 1_1_wip 9e69a86 and newer, which reads every option
+    from the overlay lines: JIT options written directly on the
+    dtoverlay=emu68 line (no more args=), new overlay lines videocore
+    (RTG memory), slowram, swap_df0 and logger; debug and disassemble
+    on the diagnostic line; new "Interpreter" option; slowdown
+    interval 0-7
+  - cmdline.txt is no longer written; an old one is read once, its
+    options are moved to config.txt and the file is deleted; the
+    cmdline= line and the "Cmdline file" field are gone
+  - Long overlay lines are split at 98 characters into "dtparam=" lines
+  - Controls without effect removed (limit to 2 GB, caches at startup,
+    ROM copy / checksum, single-slot bus, report unimplemented)
+  - Warns when the running Emu68 is too old for this version
+  - RTG video memory checked: 8-256 MB, even
+  - Emu68 status report and DTArgs 1.7 follow the new firmware
+  - Default config.txt 3.4
+  - A number typed into the box beside a slider is applied on Return
+    (before, only the slider counted); the boxes that were greyed out
+    can be typed into now
+  - TAB cycles through all gadgets (before, only the bottom list and
+    the file buttons)
+  - Framethrower: the scanline and CSI lane boxes follow their sliders
+  - Value boxes no longer cut off the first digit of their widest
+    values (aspect ratio, Filter B/C, arm_freq, over_voltage, SD and
+    eMMC clock)
+  - Live Preview: opening and closing the window no longer sends the
+    settings to the Framethrower a second time; with Integer only on,
+    closing leaves Aspect ratio unticked
+  - "USERFAT: not ready" shown highlighted in the bottom list
+
+ 3.29 (09.10.2026)
+  - Test firmware field on Emu68 > Diagnostics (developers only);
+    reads and writes "initramfs <firmware>,<ROM>"
+  - File buttons refuse commas in ROM and firmware paths
+
+ 3.28 (01.10.2026)
+  - Project menu with Right-Amiga keys, underlined keys on the buttons
+  - Save and Load always handle both files, on every tab
+  - Asks before Quit, Load or Mount throw away unsaved changes
+  - Load starts from a clean state (no values left over)
+  - File buttons for the kernels and the Kickstart ROM
+  - Kickstart ROM path is always saved to the right line
+  - RTG video memory is now written to config.txt
+  - Framethrower tab regrouped; new "Frame" field for the incoming
+    picture size; clear reason when Live Preview is not available
+  - Reads overlay options given as separate "dtparam=" lines
+  - 2160x1440 mode writes all the lines it needs
+  - Reset to Defaults follows the default config.txt 3.1
+  - Corrected help texts; Main and Memory tabs merged
+
+ 3.27 (28.09.2026)
+  - Made for Emu68 1_1_wip ba25d97 and newer: sizes in KB, boot logo
+    with 14 colour themes, JIT options in "args=", version read from
+    Emu68
+  - Built-in Emu68 status report (same as DTArgs)
+  - Safer saving (.tmp file first), many fixes
+
+============================================================================

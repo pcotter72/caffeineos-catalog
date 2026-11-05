@@ -126,10 +126,24 @@ def http_get(url, accept=None):
             time.sleep(5)
 
 
-def latest_github_asset(repo, pattern):
-    """Newest non-prerelease release of repo and the asset matching pattern."""
-    rel = json.loads(http_get(f'https://api.github.com/repos/{repo}/releases/latest',
-                              'application/vnd.github+json'))
+def latest_github_asset(repo, pattern, tag_pattern=None):
+    """Newest non-prerelease release of repo and the asset matching pattern.
+
+    tag_pattern (Tag=): for a repo that releases several programs (e.g.
+    caffeineos-catalog itself, tags like cmdlineeditor-3.34): the newest
+    published release whose tag matches; without it, GitHub's "latest".
+    """
+    if tag_pattern is None:
+        rel = json.loads(http_get(f'https://api.github.com/repos/{repo}/releases/latest',
+                                  'application/vnd.github+json'))
+    else:
+        rels = json.loads(http_get(f'https://api.github.com/repos/{repo}/releases?per_page=100',
+                                   'application/vnd.github+json'))
+        rels = [r for r in rels if not r.get('draft') and not r.get('prerelease')
+                and fnmatch.fnmatchcase(r['tag_name'], tag_pattern)]
+        if not rels:
+            raise RuntimeError(f'{repo}: no published release with a tag matching {tag_pattern!r}')
+        rel = max(rels, key=lambda r: r['published_at'])
     assets = [a for a in rel.get('assets', []) if fnmatch.fnmatch(a['name'], pattern)]
     if len(assets) != 1:
         names = [a['name'] for a in rel.get('assets', [])]
@@ -236,7 +250,7 @@ def split_ver(ver):
 def upstream(p):
     """(source label, marker, download URL) without downloading the archive."""
     if 'GitHub' in p:
-        tag, url = latest_github_asset(p['GitHub'], p.get('Asset', '*'))
+        tag, url = latest_github_asset(p['GitHub'], p.get('Asset', '*'), p.get('Tag'))
         return f"github:{p['GitHub']}", tag, url
     if 'Aminet' in p:
         marker, url = aminet_package(p['Aminet'])
