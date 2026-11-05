@@ -137,14 +137,6 @@ Archive=lha
 File=*/TimeKeeper > SYS:C/TimeKeeper
 Check=SYS:C/TimeKeeper
 
-[Program:DiskImageGUI]
-Category=Disk
-Description=Mounts ADF, ISO and HDF disk images
-Aminet=disk/misc/DiskImageGui
-Archive=lha
-File=DiskImageGui/DiskImageGui > SYS:System/DiskImageGUI
-Check=SYS:System/DiskImageGUI
-
 [Program:guigfx.library-MUI]
 Category=Libraries
 Description=guigfx.library 68040 build, the copy in System/MUI/Libs
