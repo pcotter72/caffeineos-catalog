@@ -1,0 +1,89 @@
+# sources.txt - what the CaffeineOS catalog offers.
+#
+# One [Program:Name] section per program. The scheduled GitHub Action runs
+# tools/build_catalog.py, which turns this file into catalog.txt.
+#
+#   GitHub=owner/repo      newest release of that repository (not prereleases)
+#   Asset=pattern          which release file to take (shell pattern, e.g. *.lha)
+#   URL=https://...        instead of GitHub=: a fixed download (our own tools)
+#   Archive=zip|lha|file   archive type; "file" = the download is the program itself
+#   File=src > dest        a file inside the archive and where it is installed (repeatable)
+#   Check=dest             the installed file whose $VER gives the installed version
+#                          (must be the dest of one File= line)
+#   Category=, Description= shown on the Amiga
+#
+# Plain ASCII, LF line endings.
+
+# ---- Emu68-tools (Michal Schulz and contributors), one archive, many programs ----
+
+[Program:VideoCore]
+Category=Emu68
+Description=VideoCore.card, Picasso96 driver for the Raspberry Pi display
+GitHub=michalsc/Emu68-tools
+Asset=Emu68-tools.zip
+Archive=zip
+File=VideoCore/VideoCore.card > SYS:Libs/Picasso96/VideoCore.card
+Check=SYS:Libs/Picasso96/VideoCore.card
+
+[Program:EmuControl]
+Category=Emu68
+Description=Emu68 control tool
+GitHub=michalsc/Emu68-tools
+Asset=Emu68-tools.zip
+Archive=zip
+File=EmuControl/EmuControl > SYS:C/EmuControl
+Check=SYS:C/EmuControl
+
+[Program:i2c.library]
+Category=Emu68
+Description=I2C library
+GitHub=michalsc/Emu68-tools
+Asset=Emu68-tools.zip
+Archive=zip
+File=I2C/i2c.library > SYS:Libs/i2c.library
+Check=SYS:Libs/i2c.library
+
+[Program:SetClockI2C]
+Category=Emu68
+Description=Sets the clock from an I2C real-time clock
+GitHub=michalsc/Emu68-tools
+Asset=Emu68-tools.zip
+Archive=zip
+File=I2C/SetClockI2C > SYS:C/SetClockI2C
+Check=SYS:C/SetClockI2C
+
+[Program:ListDeviceTree]
+Category=Emu68
+Description=Lists the Emu68 device tree (Philippe Carpentier)
+GitHub=michalsc/Emu68-tools
+Asset=Emu68-tools.zip
+Archive=zip
+File=ListDeviceTree/ListDeviceTree > SYS:C/ListDeviceTree
+Check=SYS:C/ListDeviceTree
+
+[Program:Emu68Info]
+Category=Emu68
+Description=Emu68 information tool (Philippe Carpentier)
+GitHub=michalsc/Emu68-tools
+Asset=Emu68-tools.zip
+Archive=zip
+File=Emu68Info/Emu68Info > SYS:C/Emu68Info
+Check=SYS:C/Emu68Info
+
+[Program:Emu68EDID]
+Category=Emu68
+Description=Emu68 EDID tool (Philippe Carpentier)
+GitHub=michalsc/Emu68-tools
+Asset=Emu68-tools.zip
+Archive=zip
+File=Emu68EDID/Emu68EDID > SYS:C/Emu68EDID
+Check=SYS:C/Emu68EDID
+
+[Program:WaitUntilConnected]
+Category=Emu68
+Description=Waits until the network is connected (Philippe Carpentier)
+GitHub=michalsc/Emu68-tools
+Asset=Emu68-tools.zip
+Archive=zip
+File=WaitUntilConnected/WaitUntilConnected > SYS:C/WaitUntilConnected
+Check=SYS:C/WaitUntilConnected
