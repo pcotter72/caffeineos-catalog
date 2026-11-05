@@ -2,17 +2,23 @@
 """Build catalog.txt for CaffeineOSDT from sources.txt.
 
 For every [Program:...] section in sources.txt the script finds the newest
-release (GitHub API) or takes the fixed URL, downloads the archive, reads the
-$VER string of the Check file inside it, computes size and MD5, and writes one
-section to the catalog. The Amiga side (CaffeineOSDT) fetches only catalog.txt.
+release (GitHub API, Aminet readme, or a fixed URL), downloads the archive,
+reads the $VER string of the Check file inside it, computes size and MD5, and
+writes one section to the catalog. The Amiga side (CaffeineOSDT) fetches only
+catalog.txt.
+
+An archive is downloaded only when its upstream marker changed (GitHub tag,
+Aminet readme version + date, or the fixed URL) or the program's section in
+sources.txt was edited; otherwise the previous catalog entry is kept.
 
 Usage:  build_catalog.py sources.txt catalog.txt
 Env:    GITHUB_TOKEN (optional, raises the GitHub API rate limit)
 
-Standard library only. Archives: zip (zipfile), lha (needs 'lha' or 'lhasa'
+Standard library only. Archives: zip (zipfile), lha (needs 'lhasa' or 'lha'
 on PATH), file (a single binary, no archive).
 """
 import fnmatch
+import glob
 import hashlib
 import json
 import os
@@ -25,7 +31,8 @@ import time
 import urllib.request
 import zipfile
 
-USER_AGENT = 'caffeineos-catalog-builder'
+USER_AGENT = 'caffeineos-catalog-builder (+https://github.com/pcotter72/caffeineos-catalog)'
+AMINET = 'https://aminet.net'
 
 
 # ---------------------------------------------------------------- sources.txt
@@ -42,11 +49,12 @@ def parse_sources(path):
                 kind, _, name = line[1:-1].partition(':')
                 if kind != 'Program' or not name:
                     sys.exit(f'{path}:{lineno}: unknown section {line}')
-                cur = {'Name': name, 'File': []}
+                cur = {'Name': name, 'File': [], '_lines': []}
                 programs.append(cur)
                 continue
             if cur is None or '=' not in line:
                 sys.exit(f'{path}:{lineno}: expected Key=Value inside a [Program:...] section')
+            cur['_lines'].append(line)
             key, _, value = line.partition('=')
             key, value = key.strip(), value.strip()
             if key == 'File':
@@ -57,11 +65,39 @@ def parse_sources(path):
         for need in ('Archive', 'Check'):
             if need not in p:
                 sys.exit(f"[Program:{p['Name']}]: {need}= missing")
-        if ('GitHub' in p) == ('URL' in p):
-            sys.exit(f"[Program:{p['Name']}]: give exactly one of GitHub= or URL=")
+        if sum(k in p for k in ('GitHub', 'URL', 'Aminet')) != 1:
+            sys.exit(f"[Program:{p['Name']}]: give exactly one of GitHub=, Aminet= or URL=")
         if not p['File']:
             sys.exit(f"[Program:{p['Name']}]: at least one File= line needed")
+        p['_hash'] = hashlib.md5('\n'.join(p['_lines']).encode('ascii')).hexdigest()[:12]
     return programs
+
+
+def parse_catalog(path):
+    """Previous catalog.txt -> {name: [lines]} (only real entries)."""
+    entries = {}
+    if not os.path.exists(path):
+        return entries
+    cur = None
+    with open(path, encoding='ascii') as f:
+        for raw in f:
+            line = raw.rstrip('\n')
+            if line.startswith('[Program:') and line.endswith(']'):
+                cur = line[9:-1]
+                entries[cur] = [line]
+            elif cur is not None:
+                if line == '':
+                    cur = None
+                else:
+                    entries[cur].append(line)
+    return entries
+
+
+def entry_value(lines, key):
+    for line in lines:
+        if line.startswith(key + '='):
+            return line[len(key) + 1:]
+    return None
 
 
 # --------------------------------------------------------------------- network
@@ -75,7 +111,7 @@ def http_get(url, accept=None):
     req = urllib.request.Request(url, headers=headers)
     for attempt in range(3):
         try:
-            with urllib.request.urlopen(req, timeout=60) as r:
+            with urllib.request.urlopen(req, timeout=120) as r:
                 return r.read()
         except Exception as e:  # network hiccup: retry twice
             if attempt == 2:
@@ -95,9 +131,24 @@ def latest_github_asset(repo, pattern):
     return rel['tag_name'], assets[0]['browser_download_url']
 
 
+def aminet_package(path):
+    """'util/dtype/JFIFdt44' -> (marker from the readme, archive URL).
+
+    The marker is the readme's Version: field plus an MD5 of the readme, so a
+    re-upload with a changed readme is noticed even when Version: stays.
+    """
+    readme = http_get(f'{AMINET}/{path}.readme')
+    text = readme.decode('latin-1')
+    m = re.search(r'^Version:\s*(\S.*?)\s*$', text, re.M)
+    version = m.group(1) if m else '?'
+    marker = f'{version}/{hashlib.md5(readme).hexdigest()[:8]}'
+    return marker, f'{AMINET}/{path}.lha'
+
+
 # -------------------------------------------------------------------- archives
 def extract(archive_bytes, kind, workdir):
-    """Unpack into workdir; returns workdir."""
+    """Unpack into workdir."""
+    real = os.path.realpath(workdir)
     if kind == 'zip':
         with tempfile.TemporaryFile() as t:
             t.write(archive_bytes)
@@ -105,8 +156,7 @@ def extract(archive_bytes, kind, workdir):
             with zipfile.ZipFile(t) as z:
                 for info in z.infolist():
                     target = os.path.realpath(os.path.join(workdir, info.filename))
-                    if not target.startswith(os.path.realpath(workdir) + os.sep) and \
-                            target != os.path.realpath(workdir):
+                    if not (target == real or target.startswith(real + os.sep)):
                         raise RuntimeError(f'zip entry escapes the work dir: {info.filename}')
                 z.extractall(workdir)
     elif kind == 'lha':
@@ -119,11 +169,21 @@ def extract(archive_bytes, kind, workdir):
         subprocess.run([tool, 'x', '_archive.lha'], cwd=workdir, check=True,
                        stdout=subprocess.DEVNULL)
         os.remove(arc)
-    elif kind == 'file':
-        pass  # handled by the caller: the download is the file itself
-    else:
+        for root, dirs, files in os.walk(workdir):
+            for n in dirs + files:
+                target = os.path.realpath(os.path.join(root, n))
+                if not target.startswith(real + os.sep):
+                    raise RuntimeError(f'lha entry escapes the work dir: {n}')
+    elif kind != 'file':
         raise RuntimeError(f'unknown Archive={kind}')
-    return workdir
+
+
+def resolve(work, pattern):
+    """Archive path with * and ? wildcards -> the one matching relative path."""
+    hits = [h for h in glob.glob(os.path.join(work, *pattern.split('/'))) if os.path.isfile(h)]
+    if len(hits) != 1:
+        raise RuntimeError(f'{pattern}: {len(hits)} files match in the archive')
+    return os.path.relpath(hits[0], work).replace(os.sep, '/')
 
 
 # ------------------------------------------------------------------ $VER parse
@@ -167,41 +227,50 @@ def split_ver(ver):
 
 
 # ----------------------------------------------------------------------- build
-def build_entry(p, cache):
+def upstream(p):
+    """(source label, marker, download URL) without downloading the archive."""
     if 'GitHub' in p:
         tag, url = latest_github_asset(p['GitHub'], p.get('Asset', '*'))
-        source = f"github:{p['GitHub']}"
-    else:
-        tag, url = '', p['URL']
-        source = 'url'
+        return f"github:{p['GitHub']}", tag, url
+    if 'Aminet' in p:
+        marker, url = aminet_package(p['Aminet'])
+        return f"aminet:{p['Aminet']}", marker, url
+    return 'url', p['URL'], p['URL']
+
+
+def build_entry(p, source, marker, url, cache):
     if url not in cache:
         print(f'  download {url}', file=sys.stderr)
         cache[url] = http_get(url)
     blob = cache[url]
 
+    files = []
     with tempfile.TemporaryDirectory() as work:
         if p['Archive'] == 'file':
+            if len(p['File']) != 1:
+                raise RuntimeError('Archive=file takes exactly one File= line')
             check_bytes = blob
+            files = p['File']
         else:
             extract(blob, p['Archive'], work)
             check_src = None
             for fl in p['File']:
                 src, _, dest = (x.strip() for x in fl.partition('>'))
-                if not os.path.exists(os.path.join(work, *src.split('/'))):
-                    raise RuntimeError(f"[Program:{p['Name']}]: File {src} not in the archive")
+                real_src = resolve(work, src)
+                files.append(f'{real_src} > {dest}')
                 if dest.lower() == p['Check'].lower():
-                    check_src = src
+                    check_src = real_src
             if not check_src:
-                raise RuntimeError(f"[Program:{p['Name']}]: no File= line installs to Check={p['Check']}")
+                raise RuntimeError(f"no File= line installs to Check={p['Check']}")
             with open(os.path.join(work, *check_src.split('/')), 'rb') as f:
                 check_bytes = f.read()
 
     ver = read_ver(check_bytes)
     if not ver:
-        raise RuntimeError(f"[Program:{p['Name']}]: no $VER in the Check file")
+        raise RuntimeError('no $VER in the Check file')
     version, date, build = split_ver(ver)
     if not version:
-        raise RuntimeError(f"[Program:{p['Name']}]: no version number in $VER '{ver}'")
+        raise RuntimeError(f"no version number in $VER '{ver}'")
 
     out = [f"[Program:{p['Name']}]"]
     for key in ('Category', 'Description'):
@@ -212,16 +281,16 @@ def build_entry(p, cache):
     if build:
         out.append(f'Build={build}')
     out.append(f'VerString={ver}')
-    if tag:
-        out.append(f'Release={tag}')
     out.append(f'Source={source}')
+    out.append(f'Upstream={marker}')
     out.append(f'URL={url}')
     out.append(f"Archive={p['Archive']}")
     out.append(f'Size={len(blob)}')
     out.append(f'MD5={hashlib.md5(blob).hexdigest()}')
-    for fl in p['File']:
+    for fl in files:
         out.append(f'File={fl}')
     out.append(f"Check={p['Check']}")
+    out.append(f"SourceHash={p['_hash']}")
     return out
 
 
@@ -230,13 +299,21 @@ def main():
         sys.exit(__doc__)
     sources, target = sys.argv[1], sys.argv[2]
     programs = parse_sources(sources)
+    previous = parse_catalog(target)
     cache = {}
     body = []
     failed = 0
     for p in programs:
         print(f"{p['Name']}:", file=sys.stderr)
         try:
-            body += build_entry(p, cache) + ['']
+            source, marker, url = upstream(p)
+            old = previous.get(p['Name'])
+            if old and entry_value(old, 'Upstream') == marker and \
+                    entry_value(old, 'SourceHash') == p['_hash'] and entry_value(old, 'URL') == url:
+                print(f'  unchanged ({marker}), previous entry kept', file=sys.stderr)
+                body += old + ['']
+                continue
+            body += build_entry(p, source, marker, url, cache) + ['']
         except Exception as e:
             failed += 1
             print(f'  ERROR {e}', file=sys.stderr)

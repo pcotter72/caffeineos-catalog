@@ -5,9 +5,13 @@
 #
 #   GitHub=owner/repo      newest release of that repository (not prereleases)
 #   Asset=pattern          which release file to take (shell pattern, e.g. *.lha)
-#   URL=https://...        instead of GitHub=: a fixed download (our own tools)
+#   Aminet=dir/name        an Aminet package, e.g. util/dtype/JFIFdt44 (its .readme
+#                          Version: is checked daily, the .lha fetched only on change)
+#   URL=https://...        a fixed download (our own tools)
 #   Archive=zip|lha|file   archive type; "file" = the download is the program itself
-#   File=src > dest        a file inside the archive and where it is installed (repeatable)
+#   File=src > dest        a file inside the archive and where it is installed (repeatable);
+#                          src may use * and ? (e.g. */Classes/...) but must match one file.
+#                          Only the listed files are installed: no sources, docs or icons
 #   Check=dest             the installed file whose $VER gives the installed version
 #                          (must be the dest of one File= line)
 #   Category=, Description= shown on the Amiga
@@ -87,3 +91,14 @@ Asset=Emu68-tools.zip
 Archive=zip
 File=WaitUntilConnected/WaitUntilConnected > SYS:C/WaitUntilConnected
 Check=SYS:C/WaitUntilConnected
+
+# ---- Datatypes ----
+
+[Program:jfif.datatype]
+Category=Datatypes
+Description=Fast JPEG datatype, 68020+ (Henryk Richter, Gunther Nikl)
+Aminet=util/dtype/JFIFdt44
+Archive=lha
+File=*/Classes/Datatypes/jfif.datatype > SYS:Classes/DataTypes/jfif.datatype
+File=*/Devs/Datatypes/JFIF > SYS:Devs/DataTypes/JFIF
+Check=SYS:Classes/DataTypes/jfif.datatype
