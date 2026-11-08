@@ -192,6 +192,15 @@ Archive=lha
 File=COP/COP > SYS:C/COP
 Check=SYS:C/COP
 
+[Program:7-Zip]
+Category=Archivers
+Description=7-Zip 26 archiver, all formats (7zz for 68040/060, and the SFX module)
+Aminet=util/arc/7zip
+Archive=lha
+File=7zip/7zz_040 > SYS:C/7zz
+File=7zip/7zSFX > SYS:C/7zSFX
+Check=SYS:C/7zz
+
 [Program:WHDArchiveExtractor]
 Category=Archivers
 Description=Extracts WHDLoad archives
