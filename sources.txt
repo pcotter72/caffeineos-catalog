@@ -201,6 +201,16 @@ File=7zip/7zz_040 > SYS:C/7zz
 File=7zip/7zSFX > SYS:C/7zSFX
 Check=SYS:C/7zz
 
+[Program:Lupa]
+Category=System
+Description=Lupa, Spotlight-style search bar (Left Amiga + Space), with Lupa-Prefs
+Aminet=util/cdity/Lupa
+Archive=lha
+File=*/Lupa > SYS:WBStartup/Lupa
+File=*/LupaMac.dic > SYS:WBStartup/LupaMac.dic
+File=*/Lupa-Prefs > SYS:Prefs/Lupa-Prefs
+Check=SYS:WBStartup/Lupa
+
 [Program:WHDArchiveExtractor]
 Category=Archivers
 Description=Extracts WHDLoad archives
