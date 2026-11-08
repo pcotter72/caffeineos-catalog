@@ -176,6 +176,14 @@ Archive=lha
 File=libs/guigfx.library_68040 > SYS:System/MUI/Libs/guigfx.library
 Check=SYS:System/MUI/Libs/guigfx.library
 
+[Program:PiStorm3D]
+Category=Libraries
+Description=PiStorm3D minigl.library, MiniGL 3D on the Pi 4/CM4 V3D GPU (needs RTG)
+Aminet=util/libs/PiStorm3D
+Archive=lha
+File=PiStorm3D/bin/minigl.library > SYS:Libs/minigl.library
+Check=SYS:Libs/minigl.library
+
 [Program:COP]
 Category=Development
 Description=COP low level debugger
