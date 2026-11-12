@@ -7,6 +7,9 @@
 #   Asset=pattern          which release file to take (shell pattern, e.g. *.lha)
 #   Tag=pattern            only releases whose tag matches (e.g. cmdlineeditor-*): for a
 #                          repo that releases several programs; the newest published wins
+#   Prerelease=yes         also take prereleases (projects that release only betas); the
+#                          newest by publish date wins
+#   AssetExclude=p1,p2     asset name patterns never taken (e.g. *-demos.lha,*-sdk.lha)
 #   Aminet=dir/name        an Aminet package, e.g. util/dtype/JFIFdt44 (its .readme
 #                          Version: is checked daily, the .lha fetched only on change)
 #   URL=https://...        a fixed download (our own tools)
@@ -183,6 +186,36 @@ Aminet=util/libs/PiStorm3D
 Archive=lha
 File=PiStorm3D/bin/minigl.library > SYS:Libs/minigl.library
 Check=SYS:Libs/minigl.library
+
+# ---- OpenGL ES for PiStorm (ladislawv): library + its shader compiler in SYS:Libs ----
+# CaffeineOS 9318 ships both and assigns OGLES2Cache:/OGLES3Cache: -> Stuff:myfiles (S:Startup-Sequence);
+# without the assign the compiled shaders go to T:. $VER has no git id, so a new beta with the same version
+# number (e.g. ogles3 1.0-beta1 -> 1.0-beta2) is not offered as an update; a higher number is.
+
+[Program:ogles2]
+Category=Libraries
+Description=OpenGL ES 2.0 for PiStorm (Pi 4/CM4 V3D, Pi 3/Zero 2 W VC4) with its shader compiler v3dglslc (needs RTG, 32-bit screen)
+GitHub=ladislawv/ogles2pi3
+Prerelease=yes
+Asset=ogles2-*.lha
+AssetExclude=*-demos.lha,*-sdk.lha,*-sdl.lha
+Readme=https://raw.githubusercontent.com/ladislawv/ogles2pi3/429b11cadf99ad22273953366ae7eb384a04c2d8/release/ReadMe
+Archive=lha
+File=ogles2/Libs/ogles2.library > SYS:Libs/ogles2.library
+File=ogles2/Libs/v3dglslc > SYS:Libs/v3dglslc
+Check=SYS:Libs/ogles2.library
+
+# ogles3 has no GitHub releases: its archives are files in the repository (release/dist), so the URL is pinned to
+# a commit (a moving branch URL could change the file under an unchanged catalog MD5). New version = new URL here.
+[Program:ogles3]
+Category=Libraries
+Description=OpenGL ES 3.1 for PiStorm with a Raspberry Pi 4/CM4 (V3D) with its shader compiler v3dglslc3 (needs RTG, 32-bit screen)
+URL=https://raw.githubusercontent.com/ladislawv/ogles3/4a5ce271ad8b3e817a6a02ab951e65ad0829d1e5/release/dist/ogles3-1.0-beta2.lha
+Readme=https://raw.githubusercontent.com/ladislawv/ogles3/4a5ce271ad8b3e817a6a02ab951e65ad0829d1e5/release/ReadMe
+Archive=lha
+File=ogles3/Libs/ogles3.library > SYS:Libs/ogles3.library
+File=ogles3/Libs/v3dglslc3 > SYS:Libs/v3dglslc3
+Check=SYS:Libs/ogles3.library
 
 [Program:COP]
 Category=Development
