@@ -44,88 +44,6 @@ File=*/CmdlineEditor > SYS:System/Emu68/CmdlineEditor
 File=*/DTArgs > SYS:C/DTArgs
 Check=SYS:System/Emu68/CmdlineEditor
 
-# ---- Emu68-tools (Michal Schulz and contributors), one archive, many programs ----
-
-[Program:VideoCore]
-Category=Emu68
-Description=VideoCore.card, Picasso96 driver for the Raspberry Pi display
-GitHub=michalsc/Emu68-tools
-Asset=Emu68-tools.zip
-ReadmeFile=Emu68-tools.readme
-Archive=zip
-File=VideoCore/VideoCore.card > SYS:Libs/Picasso96/VideoCore.card
-Check=SYS:Libs/Picasso96/VideoCore.card
-
-[Program:EmuControl]
-Category=Emu68
-Description=Emu68 control tool
-GitHub=michalsc/Emu68-tools
-Asset=Emu68-tools.zip
-ReadmeFile=Emu68-tools.readme
-Archive=zip
-File=EmuControl/EmuControl > SYS:C/EmuControl
-Check=SYS:C/EmuControl
-
-[Program:i2c.library]
-Category=Emu68
-Description=I2C library
-GitHub=michalsc/Emu68-tools
-Asset=Emu68-tools.zip
-ReadmeFile=Emu68-tools.readme
-Archive=zip
-File=I2C/i2c.library > SYS:Libs/i2c.library
-Check=SYS:Libs/i2c.library
-
-[Program:SetClockI2C]
-Category=Emu68
-Description=Sets the clock from an I2C real-time clock
-GitHub=michalsc/Emu68-tools
-Asset=Emu68-tools.zip
-ReadmeFile=Emu68-tools.readme
-Archive=zip
-File=I2C/SetClockI2C > SYS:C/SetClockI2C
-Check=SYS:C/SetClockI2C
-
-[Program:ListDeviceTree]
-Category=Emu68
-Description=Lists the Emu68 device tree (Philippe Carpentier)
-GitHub=michalsc/Emu68-tools
-Asset=Emu68-tools.zip
-ReadmeFile=Emu68-tools.readme
-Archive=zip
-File=ListDeviceTree/ListDeviceTree > SYS:C/ListDeviceTree
-Check=SYS:C/ListDeviceTree
-
-[Program:Emu68Info]
-Category=Emu68
-Description=Emu68 information tool (Philippe Carpentier)
-GitHub=michalsc/Emu68-tools
-Asset=Emu68-tools.zip
-ReadmeFile=Emu68-tools.readme
-Archive=zip
-File=Emu68Info/Emu68Info > SYS:C/Emu68Info
-Check=SYS:C/Emu68Info
-
-[Program:Emu68EDID]
-Category=Emu68
-Description=Emu68 EDID tool (Philippe Carpentier)
-GitHub=michalsc/Emu68-tools
-Asset=Emu68-tools.zip
-ReadmeFile=Emu68-tools.readme
-Archive=zip
-File=Emu68EDID/Emu68EDID > SYS:C/Emu68EDID
-Check=SYS:C/Emu68EDID
-
-[Program:WaitUntilConnected]
-Category=Emu68
-Description=Waits until the network is connected (Philippe Carpentier)
-GitHub=michalsc/Emu68-tools
-Asset=Emu68-tools.zip
-ReadmeFile=Emu68-tools.readme
-Archive=zip
-File=WaitUntilConnected/WaitUntilConnected > SYS:C/WaitUntilConnected
-Check=SYS:C/WaitUntilConnected
-
 # ---- Datatypes ----
 
 [Program:jfif.datatype]
@@ -138,14 +56,6 @@ File=*/Devs/Datatypes/JFIF > SYS:Devs/DataTypes/JFIF
 Check=SYS:Classes/DataTypes/jfif.datatype
 
 # ---- Aminet programs CaffeineOS ships (checked 05.11.2026, approved by Pedro) ----
-
-[Program:BlazeWCP]
-Category=System
-Description=Fast chunky-to-planar patch for the OS chunky functions (AGA)
-Aminet=util/boot/BlazeWCP178
-Archive=lha
-File=BlazeWCP > SYS:C/BLAZEWCP
-Check=SYS:C/BLAZEWCP
 
 [Program:HollywoodPlayer]
 Category=Multimedia
@@ -163,22 +73,6 @@ Archive=lha
 File=UnZip/020/UnZip > SYS:C/unzip
 Check=SYS:C/unzip
 
-[Program:TimeKeeper]
-Category=Network
-Description=AmiTimeKeeper, keeps the clock right over the network
-Aminet=util/cdity/AmiTimeKeeper
-Archive=lha
-File=*/TimeKeeper > SYS:C/TimeKeeper
-Check=SYS:C/TimeKeeper
-
-[Program:guigfx.library-MUI]
-Category=Libraries
-Description=guigfx.library 68040 build, the copy in System/MUI/Libs
-Aminet=dev/misc/guigfxlib
-Archive=lha
-File=libs/guigfx.library_68040 > SYS:System/MUI/Libs/guigfx.library
-Check=SYS:System/MUI/Libs/guigfx.library
-
 [Program:PiStorm3D]
 Category=Libraries
 Description=PiStorm3D minigl.library, MiniGL 3D on the Pi 4/CM4 V3D GPU (needs RTG)
@@ -186,36 +80,6 @@ Aminet=util/libs/PiStorm3D
 Archive=lha
 File=PiStorm3D/bin/minigl.library > SYS:Libs/minigl.library
 Check=SYS:Libs/minigl.library
-
-# ---- OpenGL ES for PiStorm (ladislawv): library + its shader compiler in SYS:Libs ----
-# CaffeineOS 9318 ships both and assigns OGLES2Cache:/OGLES3Cache: -> Stuff:myfiles (S:Startup-Sequence);
-# without the assign the compiled shaders go to T:. $VER has no git id, so a new beta with the same version
-# number (e.g. ogles3 1.0-beta1 -> 1.0-beta2) is not offered as an update; a higher number is.
-
-[Program:ogles2]
-Category=Libraries
-Description=OpenGL ES 2.0 for PiStorm (Pi 4/CM4 V3D, Pi 3/Zero 2 W VC4) with its shader compiler v3dglslc (needs RTG, 32-bit screen)
-GitHub=ladislawv/ogles2pi3
-Prerelease=yes
-Asset=ogles2-*.lha
-AssetExclude=*-demos.lha,*-sdk.lha,*-sdl.lha
-Readme=https://raw.githubusercontent.com/ladislawv/ogles2pi3/429b11cadf99ad22273953366ae7eb384a04c2d8/release/ReadMe
-Archive=lha
-File=ogles2/Libs/ogles2.library > SYS:Libs/ogles2.library
-File=ogles2/Libs/v3dglslc > SYS:Libs/v3dglslc
-Check=SYS:Libs/ogles2.library
-
-# ogles3 has no GitHub releases: its archives are files in the repository (release/dist), so the URL is pinned to
-# a commit (a moving branch URL could change the file under an unchanged catalog MD5). New version = new URL here.
-[Program:ogles3]
-Category=Libraries
-Description=OpenGL ES 3.1 for PiStorm with a Raspberry Pi 4/CM4 (V3D) with its shader compiler v3dglslc3 (needs RTG, 32-bit screen)
-URL=https://raw.githubusercontent.com/ladislawv/ogles3/4a5ce271ad8b3e817a6a02ab951e65ad0829d1e5/release/dist/ogles3-1.0-beta2.lha
-Readme=https://raw.githubusercontent.com/ladislawv/ogles3/4a5ce271ad8b3e817a6a02ab951e65ad0829d1e5/release/ReadMe
-Archive=lha
-File=ogles3/Libs/ogles3.library > SYS:Libs/ogles3.library
-File=ogles3/Libs/v3dglslc3 > SYS:Libs/v3dglslc3
-Check=SYS:Libs/ogles3.library
 
 [Program:COP]
 Category=Development
