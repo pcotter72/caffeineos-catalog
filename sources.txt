@@ -81,6 +81,41 @@ Archive=lha
 File=PiStorm3D/bin/minigl.library > SYS:Libs/minigl.library
 Check=SYS:Libs/minigl.library
 
+# ---- OpenGL ES for PiStorm (ladislawv): library + its shader compiler in SYS:Libs ----
+# CaffeineOS 9318 ships both and assigns OGLES2Cache:/OGLES3Cache: -> Stuff:myfiles (S:Startup-Sequence);
+# without the assign the compiled shaders go to T:. Their $VER has no git id, so a new build with the SAME
+# version number (e.g. ogles2 1.4-beta1 -> 1.4-beta2) is not offered as an update; a higher number is.
+# (Pedro 15.11.2026: back in the catalog with that limit; ogles2 is still a beta, hence Prerelease=yes.)
+# ogles2: upstream published "v1.4-beta1a" (beta 1 with a fixed shader compiler) three seconds AFTER v1.4-beta2,
+# so "newest prerelease" would pick the older code. Tag= keeps the entry on beta 2 and later betas of 1.4;
+# widen it when 1.4 final or 1.5 appears. The Readme= links are pinned to the commits of the release tags.
+
+[Program:ogles2]
+Category=Libraries
+Description=OpenGL ES 2.0 for PiStorm (Pi 4/CM4 V3D, Pi 3/Zero 2 W VC4) with its shader compiler v3dglslc (needs RTG, 32-bit screen)
+GitHub=ladislawv/ogles2pi3
+Prerelease=yes
+Tag=v1.4-beta[2-9]*
+Asset=ogles2-*.lha
+AssetExclude=*-demos.lha,*-sdk.lha,*-sdl.lha
+Readme=https://raw.githubusercontent.com/ladislawv/ogles2pi3/085f487b4e2478e5c41d2e095efeee562eabb513/release/ReadMe
+Archive=lha
+File=ogles2/Libs/ogles2.library > SYS:Libs/ogles2.library
+File=ogles2/Libs/v3dglslc > SYS:Libs/v3dglslc
+Check=SYS:Libs/ogles2.library
+
+[Program:ogles3]
+Category=Libraries
+Description=OpenGL ES 3.1 for PiStorm with a Raspberry Pi 4/CM4 (V3D) with its shader compiler v3dglslc3 (needs RTG, 32-bit screen)
+GitHub=ladislawv/ogles3
+Asset=ogles3-*.lha
+AssetExclude=*-demos.lha,*-sdk.lha,*-sdl.lha
+Readme=https://raw.githubusercontent.com/ladislawv/ogles3/649d7b35f37ef336784df64a45ace670eae978ad/release/ReadMe
+Archive=lha
+File=ogles3/Libs/ogles3.library > SYS:Libs/ogles3.library
+File=ogles3/Libs/v3dglslc3 > SYS:Libs/v3dglslc3
+Check=SYS:Libs/ogles3.library
+
 [Program:COP]
 Category=Development
 Description=COP low level debugger
