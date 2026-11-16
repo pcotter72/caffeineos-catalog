@@ -158,3 +158,21 @@ Aminet=util/time/TimeIt
 Archive=lha
 File=TimeIt/TimeIt > SYS:C/TimeIt
 Check=SYS:C/TimeIt
+
+# ---- System information ----
+# CaffeineOS 9318 ships xSysInfo 0.12.0 in Stuff:Expert/Benchmarks/xSysInfo with exactly these files and the
+# release's own identify.library in LIBS: (Pedro 16.11.2026: into the catalog). Its Catalogs drawer is not shipped.
+
+[Program:xSysInfo]
+Category=System
+Description=xSysInfo, system information and speed tests (Stefan Reinauer), with its identify.library
+GitHub=reinauer/xSysInfo
+Asset=xsysinfo-*.lha
+ReadmeFile=*/readme.txt
+Archive=lha
+File=*/xSysInfo > Stuff:Expert/Benchmarks/xSysInfo/xSysInfo
+File=*/readme.txt > Stuff:Expert/Benchmarks/xSysInfo/readme.txt
+File=*/TinySetPatch > Stuff:Expert/Benchmarks/xSysInfo/TinySetPatch
+File=*/LICENSE > Stuff:Expert/Benchmarks/xSysInfo/LICENSE
+File=*/Libs/identify.library > SYS:Libs/identify.library
+Check=Stuff:Expert/Benchmarks/xSysInfo/xSysInfo
