@@ -26,6 +26,15 @@
 #   AllowScript=yes        only for entries that are meant to replace a script
 #                          (s bit); CaffeineOSDT 5.3.1+ refuses that otherwise,
 #                          because scripts are often CaffeineOS's own
+#   DateCounts=yes         same version number + a newer $VER date = update (CaffeineOSDT
+#                          5.6.0+; older versions ignore the line). For programs whose
+#                          betas keep the number and change only the date. Without it the
+#                          date counts only when both sides carry a git id (Build=).
+#
+# Version strings: the number is the first blank-separated digit.digit token of the Check
+# file's $VER; since CaffeineOSDT 5.6.0 it may start with "v" (AmiMSX: "v4.9"). On 5.5.2 and
+# older such an entry shows "version unreadable" and an install ends with "reports version ''"
+# although the files were installed.
 #
 # Plain ASCII, LF line endings.
 
@@ -98,7 +107,8 @@ Prerelease=yes
 Tag=v1.4-beta[2-9]*
 Asset=ogles2-*.lha
 AssetExclude=*-demos.lha,*-sdk.lha,*-sdl.lha
-Readme=https://raw.githubusercontent.com/ladislawv/ogles2pi3/085f487b4e2478e5c41d2e095efeee562eabb513/release/ReadMe
+Readme=https://raw.githubusercontent.com/ladislawv/ogles2pi3/26d78d75d6297ca48cf1af9bd70247c12fdbc7b2/release/ReadMe
+DateCounts=yes
 Archive=lha
 File=ogles2/Libs/ogles2.library > SYS:Libs/ogles2.library
 File=ogles2/Libs/v3dglslc > SYS:Libs/v3dglslc
@@ -142,6 +152,22 @@ File=*/Lupa > SYS:WBStartup/Lupa
 File=*/LupaMac.dic > SYS:WBStartup/LupaMac.dic
 File=*/Lupa-Prefs > SYS:Prefs/Lupa-Prefs
 Check=SYS:WBStartup/Lupa
+
+[Program:AmiMSX]
+Category=Emulators
+Description=AmiMSX 5, MSX / MSX2 / MSX2+ / turbo R (beta) emulator (needs 68030+, AGA; PiStorm or another fast CPU for FM sound and turbo R)
+Aminet=misc/emu/AmiMSX5
+Archive=lha
+File=AmiMSX/AmiMSX > Stuff:Emulators/MSX/AmiMSX/AmiMSX
+File=AmiMSX/AmiMSX Turbo R > Stuff:Emulators/MSX/AmiMSX/AmiMSX Turbo R
+File=AmiMSX/AmiMSX.guide > Stuff:Emulators/MSX/AmiMSX/AmiMSX.guide
+File=AmiMSX/AmiMSX5.readme > Stuff:Emulators/MSX/AmiMSX/AmiMSX5.readme
+File=AmiMSX/AmiMSX4.romdb > Stuff:Emulators/MSX/AmiMSX/AmiMSX4.romdb
+File=AmiMSX/AmiMSX4.diskdb > Stuff:Emulators/MSX/AmiMSX/AmiMSX4.diskdb
+File=AmiMSX/AmiMSX2.data > Stuff:Emulators/MSX/AmiMSX/AmiMSX2.data
+File=AmiMSX/AmiMSX2.mapper > Stuff:Emulators/MSX/AmiMSX/AmiMSX2.mapper
+File=AmiMSX/Docs/CHANGES_4.x.txt > Stuff:Emulators/MSX/AmiMSX/Docs/CHANGES_4.x.txt
+Check=Stuff:Emulators/MSX/AmiMSX/AmiMSX
 
 [Program:WHDArchiveExtractor]
 Category=Archivers

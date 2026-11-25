@@ -35,6 +35,7 @@ USER_AGENT = 'caffeineos-catalog-builder (+https://github.com/pcotter72/caffeine
 AMINET = 'https://aminet.net'
 RAW_BASE = 'https://raw.githubusercontent.com/pcotter72/caffeineos-catalog/main/'
 READMES_DIR = 'readmes'     # set next to catalog.txt in main()
+READMES_USED = {}           # published readme name (lower case) -> program name
 # Part of every entry's SourceHash: raising it rebuilds all entries once
 # (2 = Readme= added, 05.11.2026).
 BUILDER_REV = '2'
@@ -243,13 +244,32 @@ def read_ver(data):
 
 
 def split_ver(ver):
-    """'EmuControl 1.5 (30.12.2025) git:b615589' -> ('1.5', '30.12.2025', 'b615589')."""
-    m = re.search(r'(?:^|\s)(\d+(?:\.\d+)+)(?=\s|\(|$)', ver)
+    """'EmuControl 1.5 (30.12.2025) git:b615589' -> ('1.5', '30.12.2025', 'b615589').
+
+    Same rules as ver_number(), ver_date() and ver_build() in CaffeineOSDT's Software.c
+    (5.6.0); CaffeineOSDT's tools/verparse/test_verparse.py compares the two.
+      version: the first blank-separated token digit.digit..., which may start with one
+               'v' or 'V' ("AmiMSX Emulator v4.9 (14.11.2026 befc7a3)" -> 4.9);
+               CaffeineOSDT before 5.6.0 does not read the 'v' form
+      date:    d.m.y at the start of the first parenthesis that starts with one,
+               followed by ')' or a blank
+      build:   "git:" + 7-40 hex digits, else 7-40 hex digits after the date inside
+               that parenthesis ("(14.11.2026 befc7a3)")
+    """
+    m = re.search(r'(?:^|(?<=[ \t]))[vV]?(\d+(?:\.\d+)+)(?=[ \t(]|$)', ver)
     version = m.group(1) if m else ''
-    d = re.search(r'\((\d{1,2}\.\d{1,2}\.\d{2,4})\)', ver)
+    d = re.search(r'\((\d{1,2}\.\d{1,2}\.\d{2,4})(?=[) \t])', ver)
     date = d.group(1) if d else ''
-    g = re.search(r'git:([0-9a-fA-F]{7,40})', ver)
-    return version, date, (g.group(1) if g else '')
+    build = ''
+    if 'git:' in ver:
+        g = re.search(r'git:([0-9a-fA-F]*)', ver)
+        if 7 <= len(g.group(1)):
+            build = g.group(1)[:40]
+    elif d:
+        g = re.match(r'[ \t]+([0-9a-fA-F]{7,40})\)', ver[d.end():])
+        if g:
+            build = g.group(1)
+    return version, date, build
 
 
 # ----------------------------------------------------------------------- build
@@ -299,7 +319,16 @@ def build_entry(p, source, marker, url, cache):
         readme_url = p.get('Readme')
         if not readme_url and 'ReadmeFile' in p and p['Archive'] != 'file':
             rsrc = resolve(work, p['ReadmeFile'])
+            # Published name: the readme's own file name when it starts with the program's
+            # name (CmdlineEditor.txt), else <Program>_<file> - two archives may both carry
+            # a "ReadMe". A name another entry already published is an error, not an overwrite.
             rname = re.sub(r'[^A-Za-z0-9._-]', '_', rsrc.rsplit('/', 1)[-1])
+            pname = re.sub(r'[^A-Za-z0-9._-]', '_', p['Name'])
+            if not rname.lower().startswith(pname.lower()):
+                rname = pname + '_' + rname
+            if READMES_USED.get(rname.lower(), p['Name']) != p['Name']:
+                raise RuntimeError(f"ReadmeFile name {rname} is already used by {READMES_USED[rname.lower()]}")
+            READMES_USED[rname.lower()] = p['Name']
             os.makedirs(READMES_DIR, exist_ok=True)
             shutil.copyfile(os.path.join(work, *rsrc.split('/')), os.path.join(READMES_DIR, rname))
             readme_url = RAW_BASE + 'readmes/' + rname
@@ -335,6 +364,10 @@ def build_entry(p, source, marker, url, cache):
         out.append(f'Readme={readme_url}')
     if p.get('AllowScript', '').lower() == 'yes':
         out.append('AllowScript=yes')
+    if p.get('DateCounts', '').lower() == 'yes':
+        if not date:
+            raise RuntimeError(f"DateCounts=yes, but no date in $VER '{ver}'")
+        out.append('DateCounts=yes')
     out.append(f"SourceHash={p['_hash']}")
     return out
 
