@@ -186,12 +186,13 @@ File=TimeIt/TimeIt > SYS:C/TimeIt
 Check=SYS:C/TimeIt
 
 # ---- System information ----
-# CaffeineOS 9318 ships xSysInfo 0.12.0 in Stuff:Expert/Benchmarks/xSysInfo with exactly these files and the
-# release's own identify.library in LIBS: (Pedro 16.11.2026: into the catalog). Its Catalogs drawer is not shipped.
+# CaffeineOS 9318 ships xSysInfo 0.12.0 in Stuff:Expert/Benchmarks/xSysInfo with exactly these files (Pedro 16.11.2026:
+# into the catalog). Its Catalogs drawer is not shipped. Pedro 26.11.2026: identify.library is its own entry (Identify,
+# Aminet IdentifyUsr 45.2); the xSysInfo release still carries 45.1, so xSysInfo no longer installs it (no downgrade).
 
 [Program:xSysInfo]
 Category=System
-Description=xSysInfo, system information and speed tests (Stefan Reinauer), with its identify.library
+Description=xSysInfo, system information and speed tests (Stefan Reinauer); needs identify.library (entry Identify)
 GitHub=reinauer/xSysInfo
 Asset=xsysinfo-*.lha
 ReadmeFile=*/readme.txt
@@ -200,5 +201,17 @@ File=*/xSysInfo > Stuff:Expert/Benchmarks/xSysInfo/xSysInfo
 File=*/readme.txt > Stuff:Expert/Benchmarks/xSysInfo/readme.txt
 File=*/TinySetPatch > Stuff:Expert/Benchmarks/xSysInfo/TinySetPatch
 File=*/LICENSE > Stuff:Expert/Benchmarks/xSysInfo/LICENSE
-File=*/Libs/identify.library > SYS:Libs/identify.library
 Check=Stuff:Expert/Benchmarks/xSysInfo/xSysInfo
+
+# identify.library has no $VER string: CaffeineOSDT 5.6.1 and the builder read its module id string
+# ("identify.library 45.2 (26.10.2026)"); CaffeineOSDT 5.6.0 and older show this entry as "version unreadable".
+# The archive's libs/identify.library is the 68020 build (its Install-E copies identify.library_000 only below 68020).
+# rexxidentify.library 1.16 in CaffeineOS is byte-identical to the one in the archive, so it is not listed.
+
+[Program:Identify]
+Category=Libraries
+Description=identify.library, hardware identification used by xSysInfo and others (Richard Koerber), 68020 build
+Aminet=util/libs/IdentifyUsr
+Archive=lha
+File=Identify/libs/identify.library > SYS:Libs/identify.library
+Check=SYS:Libs/identify.library

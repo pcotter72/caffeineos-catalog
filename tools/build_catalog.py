@@ -223,7 +223,7 @@ def plausible(s):
     return re.search(rb'\d\.\d', s) is not None
 
 
-def read_ver(data):
+def read_ver(data, name=None):
     """First plausible $VER string (same rules as CaffeineOSDT's read_ver_string)."""
     pos = data.find(VER_TAG)
     while pos >= 0:
@@ -240,6 +240,21 @@ def read_ver(data):
         if plausible(s):
             return s.decode('ascii')
         pos = data.find(VER_TAG, max(end, pos + 5))
+    # CaffeineOSDT 5.6.1: no $VER at all -> the module id string that starts with the file's own name
+    # ("identify.library 45.2 (26.10.2026)\r\n"); same rule as VersionChecker.c read_ver_string().
+    # CaffeineOSDT 5.6.0 and older cannot read such a file and show the entry as "version unreadable".
+    if name:
+        low, key = data.lower(), name.lower().encode('latin-1')
+        pos = low.find(key)
+        while pos >= 0:
+            after = pos + len(key)
+            if after + 1 < len(data) and data[after] == 0x20 and 0x30 <= data[after + 1] <= 0x39:
+                end = pos
+                while end < len(data) and end - pos < 256 and data[end] not in (0, 10, 13):
+                    end += 1
+                if plausible(data[pos:end]):
+                    return data[pos:end].decode('ascii')
+            pos = low.find(key, pos + 1)
     return None
 
 
@@ -335,7 +350,7 @@ def build_entry(p, source, marker, url, cache):
         if not readme_url and 'Aminet' in p:
             readme_url = f"{AMINET}/{p['Aminet']}.readme"
 
-    ver = read_ver(check_bytes)
+    ver = read_ver(check_bytes, p['Check'].replace(':', '/').rsplit('/', 1)[-1])
     if not ver:
         raise RuntimeError('no $VER in the Check file')
     version, date, build = split_ver(ver)
