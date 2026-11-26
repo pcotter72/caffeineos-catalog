@@ -38,21 +38,6 @@
 #
 # Plain ASCII, LF line endings.
 
-# ---- CaffeineOS's own programs: released here, in caffeineos-catalog ----
-# (one release per program version, tag <program>-<version>, the release zip as asset)
-
-[Program:CmdlineEditor]
-Category=Emu68
-Description=Emu68 / PiStorm configuration editor (config.txt), with DTArgs
-GitHub=pcotter72/caffeineos-catalog
-Tag=cmdlineeditor-*
-Asset=CmdlineEditor_*.zip
-ReadmeFile=*/CmdlineEditor.txt
-Archive=zip
-File=*/CmdlineEditor > SYS:System/Emu68/CmdlineEditor
-File=*/DTArgs > SYS:C/DTArgs
-Check=SYS:System/Emu68/CmdlineEditor
-
 # ---- Datatypes ----
 
 [Program:jfif.datatype]
