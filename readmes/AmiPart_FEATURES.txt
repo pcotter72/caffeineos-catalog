@@ -1,0 +1,295 @@
+================================================================================
+                            AmiPart - Feature List
+================================================================================
+
+AmiPart is a GadTools-based RDB (Rigid Disk Block) partition editor for
+AmigaOS 2.x and later (Kickstart 2.04+), with a full command-line and
+scripting interface.
+
+
+--------------------------------------------------------------------------------
+ TARGET SELECTION
+--------------------------------------------------------------------------------
+ * Work on a physical device (exec block-device unit) or on a disk image file.
+ * Image files are treated as 512-byte-block disks (16 heads x 63 sectors).
+ * Device selector filters out ~100 known non-storage drivers, with a
+   "Show All / Filter" toggle.
+ * Unit probe reports vendor, product and disk size, plus the driver version.
+
+
+--------------------------------------------------------------------------------
+ RDB INITIALISATION
+--------------------------------------------------------------------------------
+ * Initialise a fresh RDB with auto-detected geometry.
+ * If an RDB already exists, the geometry (cylinder count) can be updated while
+   keeping existing partition data (NEWGEO).
+ * PC partition table (MBR) detection on block 0, with an option to erase it.
+ * Option to initialise a combined MBR+RDB disk: writes an empty MBR at block 0
+   and places the RDB at block 1 (the Amiga driver scans blocks 0-15 for "RDSK"
+   so it still finds it).  Intended for shared disks used by PiStorm, Vampire,
+   bridgeboards, or other PC-compatible hardware alongside an Amiga.
+
+
+--------------------------------------------------------------------------------
+ MBR PARTITIONS
+--------------------------------------------------------------------------------
+ * Add up to 4 MBR (PC-style) partitions on a combined MBR+RDB disk.
+ * Supported types: FAT32, FAT32 LBA, FAT16, Linux, Linux Swap.
+ * Each slot is labelled MBR1..MBR4; the type appears in the filesystem column.
+ * The boot-active flag is shown as '*' in the boot-priority column.
+ * MBR partitions are shown in the partition list and disk map (hatched bars)
+   alongside the RDB partitions.
+ * Overlap checking prevents MBR partitions from clashing with each other, with
+   the RDB reserved area, or with any RDB partition.
+ * Edit or delete an MBR partition via the Edit / Delete buttons.
+ * Zero-out an MBR partition the same way as an RDB partition.
+ * MBR writes are immediate (no separate "Write" step).
+ * No formatting: use OS tools (Windows, Linux, or other Amiga PFS/FFS helpers)
+   to format the new partition.
+
+
+--------------------------------------------------------------------------------
+ FILESYSTEMS
+--------------------------------------------------------------------------------
+ * Add a filesystem driver to the RDB.
+   pfs3aio 3.1 (19.2) is built into AmiPart and is the default in the Add
+   dialog; a handler file picked from disk is used instead, whatever its
+   version.  (pfs3aio: this product includes software developed by Michiel
+   Pelt - licence in support/pfs3aio/LICENSE.)
+ * DosType may be entered as ASCII (e.g. DOS3, PFS\3) or as a 0x / $ hex value.
+ * AmiPart will try to guess the DosType from the handler file name.
+ * Filesystem driver version word and stack size are configurable.
+
+
+--------------------------------------------------------------------------------
+ PARTITIONS
+--------------------------------------------------------------------------------
+ * Add a partition with the "Add" button, or by click-and-dragging in an empty
+   area of the partition map.
+ * Zoomable partition map, so small partitions next to large ones on big
+   disks (SD/CF cards) stay selectable and resizable: "-" / "+" buttons (or
+   the + and - keys, or the mouse wheel over the map, zooming around the
+   pointer), "Fit" (or 0) for the whole disk, and "Selected" to zoom onto
+   the selected partition.  The scroller under the map pans; picking a
+   partition in the list pans it into view.  Drags work at any zoom level
+   and get finer as you zoom in.
+ * Quick-format a newly added partition immediately (Volume name + "Do not
+   format" option in the Add dialog; VOLNAME= on the CLI / in scripts).
+   CLI and scripts default to AmiPart's INTERNAL formatter (nativefmt.c): it
+   writes the empty volume itself, so it also works on image files, on the
+   Linux build and without the filesystem handler being resident; on the
+   Amiga with a real device the volume is then mounted - no reboot needed.
+   Internal coverage: FFS/OFS DOS\0..DOS\7 (any block size), PFS3 PFS\x /
+   PDS\x (pfs3aio 19.2 layout, 512-byte blocks) and SFS\0 / SFS\2
+   (SmartFilesystem 1.279 layout) - each verified byte-for-byte against the
+   real handler formatting the same partition (test/fmttest.py).  Other
+   dostypes fall back to the OS formatter.
+   SAFE (CLI switch / script keyword) or the "OS format (real handler)"
+   checkbox in the GUI Add dialog forces the OS formatter: the partition is
+   temp-mounted and formatted by its real filesystem handler, then left
+   mounted.  Real devices on the Amiga only.
+ * PFS3 partitions are tuned right after the quick-format: the maximum
+   filename length is raised to 107, and optionally a deldir (hidden
+   deleted-file history, up to 32 blocks / 992 files) is enabled - same as
+   running the PFS3 setfnsize/setdeldir utilities, but built in ("PFS3
+   deldir" checkbox in the Add dialog; DELDIR=<1-32> on the CLI / in
+   scripts).
+ * When the filesystem is not resident (e.g. formatting a PFS3 partition on a
+   system that booted without pfs3), the handler is loaded from the disk's own
+   RDB (the FSHD/LSEG code added with ADDFS - exactly what the ROM does at
+   boot) or from the FSHD's handler path (e.g. L:pfs3aio), and registered in
+   FileSystem.resource for the rest of the session.
+ * Recommends a block size based on the partition size.
+ * Symbolic cylinder values: LOW=START / NEXT, HIGH=END / +<size>.
+ * Most flags are available even if the device does not technically support
+   them (Bootable, Automount, DirectSCSI, SyncSCSI, ...).
+ * Advanced attributes: block size, buffer memory type, reserved blocks,
+   interleave, max transfer, mask, number of buffers.
+ * Boot priority and Last Disk / Last LUN boot-control flags.
+ * Move a partition's data to a new location on disk.
+ * Deleting a partition unmounts its device after the write (if not in use), so
+   no reboot is needed.  Also DELPART on the CLI / in scripts.
+
+ GROW
+ * Grow of FFS, PFS and SFS partitions is supported.  (EXPERIMENTAL)
+ * FFS grow unmounts the volume first, grows it, then remounts with the new
+   size - no reboot needed (unless the volume is in use, then it falls back to
+   the grow-then-reboot path).  PFS and SFS grow still require a reboot.
+ * SHRINK (EXPERIMENTAL): all three GROW filesystems supported -
+   FFS/OFS, PFS3 and SFS.  Shrinks a partition and its filesystem in
+   one step.
+   GUI: drag a partition's end edge left in the map, or enter a smaller
+   size in the Edit dialog - the real shrink flow takes over (allocation
+   scan, confirmation, filesystem surgery, RDB written immediately).
+   If the requested size is below the data floor, a requester states the
+   minimum size and offers to shrink to that minimum instead.  Partitions
+   with other filesystems keep the old destructive-resize warning.  CLI:
+   SHRINK=<drive> SIZE=<size|-amount|MIN> (target size, or relative
+   with a leading '-'); script: SHRINK <drive> <size|-amount|MIN>
+   [NOUNMOUNT].  Refuses unless every allocated block in the removed range
+   is movable metadata (root/bitmap blocks - relocated automatically); the
+   root moves to the new computed centre position, direct children are
+   re-parented, and bm_flag=0 makes FFS revalidate on the next mount.
+   Because of that revalidation, mount the volume once between two
+   consecutive FFS shrinks.
+   PFS3 shrink is lighter (all metadata sits at the partition start):
+   disksize/blocksfree updated, out-of-range bitmap bits sealed, roving
+   pointer clamped; requires a reboot like PFS3 grow.  Caveat: undeleting
+   a file that was deleted BEFORE the shrink may fail (its blocks may lie
+   beyond the new end) - an error, never corruption.
+   SFS shrink: new end root written at the new size, bitmap truncated,
+   free-block cache recounted; the start-root write is the atomic commit.
+   Volumes whose bitmap was relocated high by a strategy-B grow are
+   refused.  Reboot required like SFS grow.
+ * Copy a partition onto another partition - same disk or a different disk,
+   even one with DIFFERENT heads/sectors geometry.  CLI: PARTCLONE=<src>
+   TO=<dst> [TODEV=<device>].  GUI: Advanced > "Copy Partition to Another
+   Disk..." picks a destination disk and a destination partition to
+   overwrite, or "[ Create a new partition ]".  The destination keeps its
+   own geometry and location; the source's blocks are dropped in and the
+   filesystem type adopted (SFS root offsets fixed up, PFS3 size flag
+   cleared).  All three filesystems clone into any large-enough partition
+   on any geometry: PFS3 self-describes its size; FFS/OFS is grown to fill
+   the destination; SFS mounts only when its stored block count EXACTLY
+   equals the partition's DosEnvec-derived count, so an SFS clone trims the
+   destination partition to the smallest whole-cylinder span that holds the
+   source and grows the SFS by that sub-cylinder remainder to the exact
+   count (small enough to add no bitmap blocks).  The volume is
+   renamed "CL-<old>" so it does not clash with the source's label, and
+   when the destination disk has no driver for the cloned filesystem the
+   driver is copied from the source RDB (GUI asks first, CLI automatic)
+   so the clone mounts without that filesystem being resident.
+ * Dump a partition to a self-describing file and restore it (CLI PARTOUT/
+   PARTIN, script PARTOUT/PARTIN, GUI Advanced > Dump/Restore Partition).
+   The file carries a header with the full DosEnvec, so a restore recreates
+   a partition whose filesystem lines up; SFS absolute offsets are fixed up
+   for the destination's location.  Restore overwrites an existing partition
+   at least as large as the dump (larger leaves the filesystem source-sized;
+   GROW it afterward).  This doubles as a cross-disk clone: dump on one disk,
+   restore on another.  Never touches FAT/foreign data - Amiga partitions
+   only.
+ * SHRINKINFO <drive> (CLI + script) reports how far a partition COULD
+   shrink: scans the filesystem's own allocation bitmap (read-only, never
+   writes) and prints the highest used block, the minimum size in cylinders
+   and the reclaimable space.  Movable metadata (FFS root/bitmap blocks,
+   SFS end root + bitmap) is excluded from the floor, since a future SHRINK
+   would relocate it.  Works on FFS/OFS, SFS and PFS3.
+
+
+--------------------------------------------------------------------------------
+ BACKUP / RESTORE / VERIFY
+--------------------------------------------------------------------------------
+ * Backup and restore of the RDB block.
+ * Extended backup and restore of all RDB blocks, including filesystem drivers.
+ * Verify an RDB against saved blocks (single block and extended).
+ * RDB integrity check: checksums, partition overlaps, filesystem headers and
+   block-chain consistency.
+
+
+--------------------------------------------------------------------------------
+ IMAGING
+--------------------------------------------------------------------------------
+ * Dump a disk to an image file.
+ * Write an image file back to a disk.
+ * Create a new, empty image of a chosen size (CREATE SIZE=<n>K/M/G), sparse on
+   filesystems that support it.
+ * Large files (>2 GB) require a host filesystem that can handle them; the
+   dos.library Seek limit otherwise caps image files at ~2 GB.
+ * Export an AmigaDOS MountList from the selected drive's RDB (GUI menu
+   "Export MountList...", CLI MOUNTLIST=<path>, script MOUNTLIST FILE=<path>).
+   One entry per partition with the full DosEnvVec; a FileSystem line is
+   emitted when the RDB carries a matching handler path.  Read-only.
+ * Zero out a partition: overwrite every data block with zeros without
+   touching the RDB.  Makes disk images far more compressible (zeroed blocks
+   shrink well with zip/lha).  Available in the GUI (Advanced > Zero
+   Partition...), CLI (ZEROPART NAME=<drive>), and scripts (ZEROPART NAME=).
+ * Undo All Changes (project menu, Amiga-Z): discards every unsaved edit and
+   reloads the RDB and MBR from disk - the opposite of Write.
+ * Clear RDB and MBR: zero the RDB scan area (and all RDB metadata blocks),
+   the MBR and any GPT headers so a disk reads as blank everywhere.  GUI
+   (Advanced > Clear RDB and MBR...), CLI (CLEARRDB), scripts (CLEARRDB).
+
+
+--------------------------------------------------------------------------------
+ HEALTH / DIAGNOSTICS
+--------------------------------------------------------------------------------
+ * SMART status read support (ATA SMART via SCSI ATA PASS-THROUGH).
+   Always through the device driver, never the controller's registers.
+   Needs a driver with pass-through (lide.device and others); Commodore's
+   scsi.device has none.  When SMART cannot be read the screen shows the
+   driver's answer.
+ * Bad-block scan with per-sector error reporting.
+ * Rescue scan (CLI RESCUE [DEEP]): finds surviving RDB blocks and
+   FFS/OFS, PFS3 and SFS volumes on a disk whose partition table is lost
+   or damaged, and prints a proposed partition table.  Ignores disk
+   images stored as files and leftovers of older layouts.  Read-only;
+   RESCUE WRITE rebuilds the table from the findings (new RDB, or missing
+   entries added to the existing one, surviving filesystem drivers
+   included) after a Y/N question - partition data is never touched.
+   Script: RESCUE [DEEP] [REPORT] merges into the in-memory RDB; WRITE
+   commits it.
+   GUI: Advanced > Rescue Lost Partitions... (Scan / Deep Scan with a
+   cancellable progress window, then a report window with
+   "Load into AmiPart" / Cancel - loading only changes the table in
+   memory, it is written only by the normal Write).
+ * Debug tools: view RDB block, raw block scan, hex dump, raw disk read,
+   FFS root-block inspection (post-resize validation).
+
+
+--------------------------------------------------------------------------------
+ COMMAND LINE & SCRIPTING
+--------------------------------------------------------------------------------
+ * Full command-line operation in addition to the GUI.
+ * Script files with comments (# or ;) and blank lines.
+ * Script commands: OPEN / CREATE / CLOSE, INIT NEW [MBR] / NEWGEO, ADDPART,
+   DELPART, ADDMBR, DELMBR, ADDFS, GROW, SHRINK, SHRINKINFO, ZEROPART,
+   PARTOUT / PARTIN, PARTCLONE, BACKUP / RESTORE, BACKUPEXT / RESTOREEXT,
+   WRITE, INFO, CHECKRDB, VERIFYRDB / VERIFYEXT, IMAGEOUT / IMAGEIN,
+   MOUNTLIST, REBOOT.
+ * Safety nets shared by GUI, CLI and scripts: a damaged (truncated) RDB
+   chain is reported and writes are refused until acknowledged; RESTOREEXT
+   checks that the backup belongs to the disk (geometry + product string);
+   whole-disk overwrites (COPYDISK, IMAGEIN) refuse a target with mounted
+   partitions unless forced; copies report zero-filled unreadable blocks.
+   - INIT NEW MBR: empty MBR at block 0, RDB at block 1 (both written by
+     WRITE, like every other INIT).
+   - ADDMBR TYPE=<t> START=<cyl> END=<cyl|+size> [ACTIVE]: adds an MBR
+     partition (types: FAT32 FAT32LBA FAT16 LINUX LINUXSWAP).  Writes
+     immediately; no WRITE needed.  +size notation (e.g. END=+8G) converts
+     a byte-size to an end cylinder relative to START.
+   - DELMBR NAME=<MBR1..MBR4>: clears an MBR slot and writes immediately.
+ * CLI commands: INIT=NEWMBR, ADDMBR, DELMBR.
+   - INIT=NEWMBR DEV=<dev>:<unit>: same as script INIT NEW MBR.
+   - ADDMBR MBRTYPE=<t> STARTCYL=<cyl> ENDCYL=<cyl|+size> [ACTIVE]: adds
+     an MBR partition (device must already have an MBR from INIT=NEWMBR).
+   - DELMBR NAME=<MBR1..MBR4>: removes an MBR partition.
+ * INFO (CLI and script) now includes MBR partition table when present.
+ * ADDPART VOLNAME=<label> (CLI and script) quick-formats the new partition
+   with the internal formatter (FFS/OFS, PFS3, SFS); SAFE forces the OS
+   formatter (Amiga + real device only).
+   DELDIR=<1-32> additionally enables a PFS3 deldir of that many blocks.
+ * DRYRUN mode previews actions without writing.
+ * FORCE option suppresses confirmation prompts for unattended runs.
+
+
+--------------------------------------------------------------------------------
+ LOCALIZATION
+--------------------------------------------------------------------------------
+ * Full locale.library catalog support: the entire GUI, CLI and script
+   interface (~1000 strings) can be translated.
+ * Translatable strings live in catalogs/AmiPart.cd (CatComp/FlexCat format);
+   see catalogs/README.txt for the translator workflow.
+ * Catalogs are searched in LOCALE:Catalogs/<lang>/ and PROGDIR:Catalogs/<lang>/.
+ * Graceful fallback: locale.library exists only on AmigaOS 2.1 (V38)+.  On
+   Kickstart 2.04 (V37) AmiPart runs unchanged with built-in English - no
+   catalog is loaded and nothing fails, so full 2.x compatibility is kept.
+
+
+--------------------------------------------------------------------------------
+ MISCELLANEOUS
+--------------------------------------------------------------------------------
+ * Write-back verification: blocks are read back after writing to detect errors.
+ * Workbench launch and tooltype support, in addition to CLI launch.
+ * No undo - all changes are applied only on explicit Write.
+
+================================================================================
