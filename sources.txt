@@ -188,6 +188,20 @@ File=*/TinySetPatch > Stuff:Expert/Benchmarks/xSysInfo/TinySetPatch
 File=*/LICENSE > Stuff:Expert/Benchmarks/xSysInfo/LICENSE
 Check=Stuff:Expert/Benchmarks/xSysInfo/xSysInfo
 
+[Program:AmiPart]
+Category=System
+Description=AmiPart, RDB partition editor for hard disks, cards and disk images (GUI and command line, Kickstart 2.04+); next to HDToolBox
+GitHub=ChuckyGang/AmiPart
+Prerelease=yes
+Tag=v*
+Asset=AmiPart-*.lha
+ReadmeFile=FEATURES.txt
+Archive=lha
+File=AmiPart > SYS:Tools/AmiPart
+File=FEATURES.txt > SYS:Docs/AmiPart/FEATURES.txt
+File=pfs3aio-LICENSE.txt > SYS:Docs/AmiPart/pfs3aio-LICENSE.txt
+Check=SYS:Tools/AmiPart
+
 # identify.library has no $VER string: CaffeineOSDT 5.6.1 and the builder read its module id string
 # ("identify.library 45.2 (26.10.2026)"); CaffeineOSDT 5.6.0 and older show this entry as "version unreadable".
 # The archive's libs/identify.library is the 68020 build (its Install-E copies identify.library_000 only below 68020).
